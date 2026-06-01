@@ -1,0 +1,40 @@
+name: Auto Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build and Publish
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            artifact_name: my_program_windows.exe
+            compile_cmd: clang++ HelloWorld.cpp -o my_program_windows.exe
+          - os: ubuntu-latest
+            artifact_name: my_program_linux
+            compile_cmd: clang++ HelloWorld.cpp -o my_program_linux
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Compile C++ Source
+        run: |
+          ${{ matrix.compile_cmd }}
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifact_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
